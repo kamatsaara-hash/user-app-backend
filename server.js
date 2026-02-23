@@ -1,3 +1,5 @@
+// server.js
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -5,23 +7,48 @@ const path = require("path");
 
 const app = express();
 
+// ------------------------------
+// Middleware
+// ------------------------------
 app.use(cors());
 app.use(express.json());
 
-// Serve static files (like index.html)
-app.use(express.static(__dirname));
+// Serve static files (index.html, CSS, JS)
+app.use(express.static(path.join(__dirname, "public"))); // optional: move index.html + assets to public/
 
+// ------------------------------
 // MongoDB Atlas Connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected!"))
-  .catch(err => console.error("MongoDB connection error:", err));
-// Schema
+// ------------------------------
+const mongoURI = process.env.MONGO_URI;
+
+if (!mongoURI) {
+  console.error("❌ ERROR: MONGO_URI not set in environment variables!");
+  process.exit(1); // stop server if DB URI missing
+}
+
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+  .then(() => console.log("✅ MongoDB Connected!"))
+  .catch(err => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1); // stop server if DB fails
+  });
+
+// ------------------------------
+// Mongoose Schema & Model
+// ------------------------------
 const UserSchema = new mongoose.Schema({
-  name: String,
-  email: String
+  name: { type: String, required: true },
+  email: { type: String, required: true }
 });
 
 const User = mongoose.model("User", UserSchema);
+
+// ------------------------------
+// Routes
+// ------------------------------
 
 // Add User
 app.post("/add-user", async (req, res) => {
@@ -44,12 +71,16 @@ app.get("/users", async (req, res) => {
   }
 });
 
-// Root route → open index.html
+// Root route → serve index.html
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html")); // if you moved to public/
 });
 
+// ------------------------------
+// Start Server
+// ------------------------------
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
-  console.log("Server running...");
+  console.log(`🚀 Server running on port ${PORT}`);
 });
