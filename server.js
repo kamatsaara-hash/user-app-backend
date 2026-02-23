@@ -1,68 +1,49 @@
 // server.js
+console.log("Starting server...");
 
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const path = require("path");
+require("dotenv").config(); // Optional (only needed if using .env)
+
+console.log("Modules loaded...");
 
 const app = express();
-
-// ------------------------------
-// Middleware
-// ------------------------------
 app.use(cors());
 app.use(express.json());
 
-// Serve static files (index.html, CSS, JS)
-app.use(express.static(path.join(__dirname, "public"))); // optional: move index.html + assets to public/
+const path = require("path");
+app.use(express.static(path.join(__dirname))); // serve files from project folder
 
-// ------------------------------
-// MongoDB Atlas Connection
-// ------------------------------
-const mongoURI = process.env.MONGO_URI;
+// 🔥 Connect to MongoDB Atlas
+mongoose.connect("mongodb+srv://web:@cluster0.gitqnpn.mongodb.net/mydatabase?retryWrites=true&w=majority")
+  .then(() => console.log("MongoDB Atlas Connected!"))
+  .catch(err => console.error("MongoDB connection error:", err));
 
-if (!mongoURI) {
-  console.error("❌ ERROR: MONGO_URI not set in environment variables!");
-  process.exit(1); // stop server if DB URI missing
-}
-
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-  .then(() => console.log("✅ MongoDB Connected!"))
-  .catch(err => {
-    console.error("❌ MongoDB connection error:", err);
-    process.exit(1); // stop server if DB fails
-  });
-
-// ------------------------------
-// Mongoose Schema & Model
-// ------------------------------
+// Schema
 const UserSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true }
+  name: String,
+  email: String
 });
 
 const User = mongoose.model("User", UserSchema);
 
-// ------------------------------
-// Routes
-// ------------------------------
-
-// Add User
+// Add user
 app.post("/add-user", async (req, res) => {
+  console.log("POST /add-user called", req.body);
   try {
     const user = new User(req.body);
     await user.save();
-    res.json({ message: "User saved successfully!" });
+    res.json({ message: "User saved!" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Get Users
+// Get users
 app.get("/users", async (req, res) => {
+  console.log("GET /users called");
   try {
     const users = await User.find();
     res.json(users);
@@ -71,16 +52,7 @@ app.get("/users", async (req, res) => {
   }
 });
 
-// Root route → serve index.html
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html")); // if you moved to public/
-});
-
-// ------------------------------
-// Start Server
-// ------------------------------
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+// Start server
+app.listen(5000, () => {
+  console.log("Server running on http://localhost:5000");
 });
