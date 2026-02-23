@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User App</title>
+</head>
+<body>
+
+    <h2>Add User</h2>
+    <input type="text" id="name" placeholder="Enter Name">
+    <input type="email" id="email" placeholder="Enter Email">
+    <button onclick="addUser()">Add User</button>
+
+    <h2>All Users</h2>
+    <button onclick="getUsers()">Show Users</button>
+    <ul id="userList"></ul>
+
+<script>
+    const BASE_URL = "https://user-app-backend-1-3o93.onrender.com";
+
+    async function addUser() {
+        const name = document.getElementById("name").value;
+        const email = document.getElementById("email").value;
+
+        const response = await fetch(`${BASE_URL}/add-user`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ name, email })
+        });
+
+        const data = await response.json();
+        alert(data.message);
+    }
+
+    async function getUsers() {
+        const response = await fetch(`${BASE_URL}/users`);
+        const users = await response.json();
+
+        const list = document.getElementById("userList");
+        list.innerHTML = "";
+
+        users.forEach(user => {
+            const li = document.createElement("li");
+            li.textContent = user.name + " - " + user.email;
+            list.appendChild(li);
+        });
+    }
+</script>
+
+</body>
+</html>

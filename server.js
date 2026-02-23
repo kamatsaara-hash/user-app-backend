@@ -1,24 +1,20 @@
-console.log("Starting server...");
-
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// 🔥 MongoDB Atlas Connection (from Render Environment Variable)
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Atlas Connected!"))
-  .catch(err => console.error("MongoDB connection error:", err));
+// Serve static files (like index.html)
+app.use(express.static(__dirname));
 
-// ✅ Root Route (Fixes "Cannot GET /")
-app.get("/", (req, res) => {
-  res.send("Backend is running successfully 🚀");
-});
+// MongoDB Atlas Connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected!"))
+  .catch(err => console.error("MongoDB connection error:", err));
 
 // Schema
 const UserSchema = new mongoose.Schema({
@@ -49,9 +45,12 @@ app.get("/users", async (req, res) => {
   }
 });
 
-// ✅ Important for Render
-const PORT = process.env.PORT || 5000;
+// Root route → open index.html
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
 
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log("Server running...");
 });
